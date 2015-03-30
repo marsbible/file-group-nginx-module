@@ -20,7 +20,7 @@ a nginx module can manage files in shared memory, support file group and online 
    actual name,group_name+file_key must be unique. 
    
    a sample is like this:
-
+```
    file_group {
    
        group_dir /home/foot/dict;
@@ -36,6 +36,7 @@ a nginx module can manage files in shared memory, support file group and online 
        file2 file2.dat;
        
    }
+```   
 3. 
    change your own module's config, e.g. 
        NGX_ADDON_DEPS="$NGX_ADDON_DEPS \
@@ -48,6 +49,7 @@ a nginx module can manage files in shared memory, support file group and online 
    add "extern ngx_module_t ngx_fgroup_module;" to your own module code
    
    get the file content when your need, e.g.
+```
    
        ngx_str_t group_name = ngx_string("test");
        
@@ -56,7 +58,7 @@ a nginx module can manage files in shared memory, support file group and online 
        ngx_str_t res = ngx_fgroup_get_file(fgroup_get_cur_conf(), &group_name, &file_name);
        
        //res refer to the content of file1, do something with res1... 
-       
+```       
 
 # How to online reload files
   a typical way is to add a http handler and bind it to a specific URL, then in the http handler,
@@ -75,7 +77,7 @@ a nginx module can manage files in shared memory, support file group and online 
   
   NOTICE:
   when reload in AIO mode, the caller is responsible to make sure the 3 AIO arguments will not be destroyed until AIO is done.In the typical way(process reload in a http handler), we should increase the referrence counter of ngx_http_request_t and set aio to 1 when aio issued,e.g.   
-  
+```  
      if(ret == RELOAD_FGROUP_AGAIN) {
      
         r->main->blocked++;
@@ -83,9 +85,9 @@ a nginx module can manage files in shared memory, support file group and online 
         r->aio = 1;
         
      }
-     
+```     
   and restore it at the end of ngx_fgroup_reload_aio_cb,e.g.
-  
+``` 
      if(aio_st->aio_issued) {
      
        r->main->blocked--;
@@ -93,7 +95,7 @@ a nginx module can manage files in shared memory, support file group and online 
        r->aio = 0;
        
      } 
-     
+```     
 
 # Limitations
   This module is highly rely on Linux and doesn't have a plan to support other platforms.
