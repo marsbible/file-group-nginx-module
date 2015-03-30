@@ -63,9 +63,9 @@ a nginx module can manage files in shared memory, support file group and online 
 # How to online reload files
   a typical way is to add a http handler and bind it to a specific URL, then in the http handler,
   you can call the reload function when you got arguments ready,the interface is as below:
-       
+```       
   ngx_int_t ngx_fgroup_batch_reload(ngx_str_t *group_name, ngx_array_t *args, ngx_fgroup_reload_aio_cb cb, void *arg, ngx_pool_t *pool);
-  
+```  
   group_name is the file group you want to reload, args is an array of file keys you want to reload, if no file key if specified, all files of the group will be reloaded.
   
   The last 3 arguments is file AIO related, if you won't use AIO, just pass all these 3 arguments as NULL, otherwise cb is the callback 
