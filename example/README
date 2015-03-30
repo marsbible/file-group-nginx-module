@@ -1,0 +1,5 @@
+This is a simple example module to demostrate the usage of file_group_module.
+Put the app-server-module to the root directory of nginx source code,and add this module to configure line.
+Then build with file-group-module, we can get a simple server with online file reload function.
+To get more details, please review the code of this module.
+

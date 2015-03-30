@@ -1,0 +1,36 @@
+--- src/os/unix/ngx_process_cycle.c	2014-09-15 11:05:45.000000000 +0800
++++ src/os/unix/ngx_process_cycle.init_master.c	2014-09-15 11:05:14.000000000 +0800
+@@ -145,6 +145,16 @@
+     delay = 0;
+     sigio = 0;
+     live = 1;
++    
++    /* call init_master to do master only stuff */
++    for (i = 0; ngx_modules[i]; i++) {
++        if (ngx_modules[i]->init_master) {
++            if (ngx_modules[i]->init_master(cycle) != NGX_OK) {
++                /* fatal */
++                exit(1);
++            }
++        }
++    }
+ 
+     for ( ;; ) {
+         if (delay) {
+@@ -256,6 +266,16 @@
+ 
+             /* allow new processes to start */
+             ngx_msleep(100);
++            
++            /* call init_master to do master only stuff */
++            for (i = 0; ngx_modules[i]; i++) {
++                if (ngx_modules[i]->init_master) {
++                    if (ngx_modules[i]->init_master(cycle) != NGX_OK) {
++                        /* fatal */
++                        exit(1);
++                    }
++                }
++            }
+ 
+             live = 1;
+             ngx_signal_worker_processes(cycle,

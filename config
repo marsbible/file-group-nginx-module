@@ -1,0 +1,5 @@
+ngx_addon_name=ngx_fgroup_module
+HTTP_MODULES="ngx_fgroup_module $HTTP_MODULES"
+NGX_ADDON_SRCS="$NGX_ADDON_SRCS $ngx_addon_dir/src/ngx_file_group_bufferset.c $ngx_addon_dir/src/ngx_file_group_module.c $ngx_addon_dir/src/ngx_file_group_update.c $ngx_addon_dir/src/ngx_http_file_group.c"
+NGX_ADDON_DEPS="$NGX_ADDON_DEPS $ngx_addon_dir/src/ngx_file_group_module.h $ngx_addon_dir/src/ngx_file_group_module_internal.h"
+CORE_LIBS="$CORE_LIBS -lrt"
