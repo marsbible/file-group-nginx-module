@@ -55,7 +55,6 @@ a nginx module can manage files in shared memory, support file group and online 
        
        ngx_str_t res = ngx_fgroup_get_file(fgroup_get_cur_conf(), &group_name, &file_name);
        
-       
        //res refer to the content of file1, do something with res1... 
        
 
