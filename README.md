@@ -71,8 +71,8 @@ a nginx module can manage files in shared memory, support file group and online 
   
   
   NOTICE:
-  when reload in AIO mode, the caller is responsible to make sure the 3 AIO arguments will not be destroyed until AIO is done.In the typical
-  way(process reload in a http handler), we should increase the referrence counter of ngx_http_request_t and set aio to 1 when aio issued,e.g.   
+  when reload in AIO mode, the caller is responsible to make sure the 3 AIO arguments will not be destroyed until AIO is done.In the typical way(process reload in a http handler), we should increase the referrence counter of ngx_http_request_t and set aio to 1 when aio issued,e.g.   
+  
      if(ret == RELOAD_FGROUP_AGAIN) {
      
         r->main->blocked++;
