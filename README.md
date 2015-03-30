@@ -48,12 +48,16 @@ a nginx module can manage files in shared memory, support file group and online 
    add "extern ngx_module_t ngx_fgroup_module;" to your own module code
    
    get the file content when your need, e.g.
+   
        ngx_str_t group_name = ngx_string("test");
+       
        ngx_str_t file_name = ngx_string("file1");
        
        ngx_str_t res = ngx_fgroup_get_file(fgroup_get_cur_conf(), &group_name, &file_name);
        
+       
        //res refer to the content of file1, do something with res1... 
+       
 
 # How to online reload files
   a typical way is to add a http handler and bind it to a specific URL, then in the http handler,
