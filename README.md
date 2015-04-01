@@ -11,9 +11,9 @@ a nginx module can manage files in shared memory, support file group and online 
 4. ./configure ... && make
 
 # How to use this module?
-1. Add "include file_groups.conf;" to nginx.conf at top level
+(1) Add "include file_groups.conf;" to nginx.conf at top level
 
-2. Create file_groups.conf and add file-group configuration to it, keyword "file_group" with a name to create a file group,
+(2) Create file_groups.conf and add file-group configuration to it, keyword "file_group" with a name to create a file group,
    no name means the unique default group, keyword "group_dir" to set the default directory of a group.
 
    Other config line is free to define with a form "file_key file_name", within which file_key identify a file's key and file_name identify a file's 
@@ -38,7 +38,7 @@ a nginx module can manage files in shared memory, support file group and online 
    }
 ```   
 
-3. change your own module's config, e.g. 
+(3) change your own module's config, e.g. 
 
        NGX_ADDON_DEPS="$NGX_ADDON_DEPS \
                        $ngx_addon_dir/../file-group-nginx-module/src/ngx_file_group_module.h"
