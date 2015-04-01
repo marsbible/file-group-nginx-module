@@ -98,7 +98,10 @@ a nginx module can manage files in shared memory, support file group and online 
 ```     
 
 # Limitations
-  This module is highly rely on Linux and doesn't have a plan to support other platforms.
+  This module highly rely on Linux and doesn't have a plan to support other platforms.
+  
   This module only support multi-process mode of nginx, doesn't support multi-thread.
+  
   The module has a patch to add init_master callback, though it's simple and has no sideeffect to other functions,
   it should be noticed.
+  
