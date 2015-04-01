@@ -10,7 +10,6 @@ static void *file_meta_shm = NULL;
 static size_t file_meta_size = 0;
 static char meta_name[sizeof(FILE_META_SHM_NAME)+16];
 
-//file group配置解析
 typedef struct {
     ngx_fgroup_conf_t *conf; 
     ngx_fgroup_file_group_t *group;
@@ -178,7 +177,7 @@ ngx_fgroup_file_conf(ngx_conf_t *cf, ngx_command_t *dummy, void *conf)
         return NGX_CONF_OK;
     }
 
-    //计算group name+file name的murmruhash
+    //calc hash of group name+file name
     murmurhash2a_t mmh;
     murmurhash2a_begin(&mmh, 0);
     murmurhash2a_add(&mmh, group->group_name.data, group->group_name.len);
@@ -280,7 +279,7 @@ ngx_fgroup_group_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     groups = clcf->file_groups.elts;
     
     if(groups == NULL) {
-        //file group初始化
+        //file group init
         if (ngx_array_init(&clcf->file_groups, cf->pool, 8,
                     sizeof(ngx_fgroup_file_group_t))
                 != NGX_OK)
@@ -296,7 +295,7 @@ ngx_fgroup_group_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return "invalid group id";
     }
 
-    //合法的group id不能为0
+    //valid group id cannot be 0
     if(hash == 0) hash = NULL_FILE_GROUP_ID;
 
     for (n = 0; n < clcf->file_groups.nelts; n++) {
@@ -305,7 +304,7 @@ ngx_fgroup_group_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             break;
     }
 
-    //id相同但是名字不同，发生了hash冲突
+    //same id with different name, hash conflict occurs
     if(n < clcf->file_groups.nelts) {
         return "group id conflict";
     }
@@ -340,8 +339,8 @@ ngx_fgroup_group_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
         ngx_memzero(&group->bs, sizeof(ngx_fgroup_bufferset_internal_t));
 
-        //每个group分配一个slab，主要是使用slab的mutex作为group的互斥锁，因为nginx
-        //会自动清理异常退出子进程的slab锁，可以保证group操作的安全性。
+        //alloc a slab for each group to utilize the mutex of slab as group lock, 
+        //nginx could automatically sanitize inconsistent slab mutex of exited worker process 
         group->shm_zone = ngx_shared_memory_add(cf, &group_name, 1024, group);
 
         if (group->shm_zone == NULL) {
@@ -538,11 +537,11 @@ static ngx_int_t ngx_fgroup_module_init(ngx_cycle_t *cycle)
         ngx_fgroup_shm_bufferset_t *t = NULL;
         ngx_fgroup_shm_bufferset_t *bst = (ngx_fgroup_shm_bufferset_t *)pos;
         ngx_fgroup_bufferset_init((ngx_fgroup_bufferset_t *)(&groups[n].bs), (void *)pos, groups[n].group_files.nelts, mycf);
-        
-        //slab zone里的锁使用buffer里的变量，这样即使非父子进程也能互斥
-	groups[n].shpool->mutex.lock = &bst->lock.lock;
 
-	if(old_meta) {
+        //change mutex's internal flag to shared meta data so that it can take effect to all processes attached the shared meta data 
+        groups[n].shpool->mutex.lock = &bst->lock.lock;
+
+        if(old_meta) {
             t = (ngx_fgroup_shm_bufferset_t *)old_meta;
             for(; t->group_id != 0; ) {
                 if(t->group_id == groups[n].group_id) {
@@ -575,7 +574,7 @@ static ngx_int_t ngx_fgroup_module_init(ngx_cycle_t *cycle)
                 ngx_msleep(10);
             }
 
-            //超时2s还lock不住，认为old_meta不正常，不再使用其信息
+            //cannot lock after 2s，consider old_meta is abnormal，give up
             if(i > 200) {
                 ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0, "lock old fgroup %V failed in 2s", &groups[n].group_name);
                 end = 0;
@@ -589,16 +588,16 @@ static ngx_int_t ngx_fgroup_module_init(ngx_cycle_t *cycle)
                 ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0, "lock old fgroup %V ok, %z elems", &groups[n].group_name, end);
         }
 
-        //将old_meta的信息拷贝过来
+        //copy old_meta
         for (m=0; m<end; m++) {
-            //初始化buf_key
+            //init buf_key
             bst->buffer_version[m].buf_key = ft[m].node.key;
             bst->buffer_version[m].buf_id = -1;
-            //如果当前的key不匹配，或者当前buffer无效，一致性起见，后续不再使用old_meta 
+            //if key doesn't match，or buffer invalid, consider old_meta is abnormal 
             if(t->buffer_version[m].buf_key != ft[m].node.key || t->buffer_version[m].buf_id == -1)
                 break;
             ated = ngx_fgroup_shm_get_by_id(t->buffer_version[m].buf_id);
-            //无效的shm
+            //invalid shm
             if(ated == NULL)
                 break;
 
@@ -607,7 +606,7 @@ static ngx_int_t ngx_fgroup_module_init(ngx_cycle_t *cycle)
             bst->buffer_version[m].buf_id = t->buffer_version[m].buf_id;
         }
 
-        //无法复用的节点，重新load
+        //cannot reuse, reload others from file 
         for(; m < groups[n].group_files.nelts; m++) {
             bst->buffer_version[m].buf_key = ft[m].node.key;
             bst->buffer_version[m].buf_id = -1;
@@ -615,7 +614,7 @@ static ngx_int_t ngx_fgroup_module_init(ngx_cycle_t *cycle)
                 break;
         }
 
-        //发生了错误
+        //error occurs
         if(m < groups[n].group_files.nelts) {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, 0, "file group reload %V failed", &ft[m].name);
             if(end) ngx_shmtx_unlock(&mutex);
