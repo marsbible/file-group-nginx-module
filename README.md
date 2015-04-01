@@ -37,8 +37,7 @@ a nginx module can manage files in shared memory, support file group and online 
        
    }
 ```   
-3. 
-   change your own module's config, e.g. 
+3. change your own module's config, e.g. 
        NGX_ADDON_DEPS="$NGX_ADDON_DEPS \
                        $ngx_addon_dir/../file-group-nginx-module/src/ngx_file_group_module.h"
 
