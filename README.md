@@ -67,13 +67,11 @@ a nginx module can manage files in shared memory, support file group and online 
 ```       
   ngx_int_t ngx_fgroup_batch_reload(ngx_str_t *group_name, ngx_array_t *args, ngx_fgroup_reload_aio_cb cb, void *arg, ngx_pool_t *pool);
 ```  
-  group_name is the file group you want to reload, args is an array of file keys you want to reload, if no file key if specified, all files of the group will be reloaded.
+  group_name is the file group you want to reload, args is an array of file keys you want to reload, if no file key is specified, all files of the group will be reloaded.
   
-  The last 3 arguments is file AIO related, if you won't use AIO, just pass all these 3 arguments as NULL, otherwise cb is the callback 
-  which will be called when AIO is done, arg is its argument,pool is temporary memory pool for internal use.
+  The last 3 arguments is file AIO related, if you won't use AIO, just pass all these 3 arguments as NULL, otherwise cb is the callback which will be called when AIO is done, arg is its argument,pool is temporary memory pool for internal use.
   
-  In the typical way, cb is a callback which construct a response and send back to client, arg is the ngx_http_request_t processing the reload request, pool is the memory pool 
-  of ngx_http_request_t so that is will be auto destroyed when request is finished.
+  In the typical way, cb is a callback which constructs a response and send back to client, arg is the ngx_http_request_t processing the reload request, pool is the memory pool of ngx_http_request_t so that is will be auto destroyed when request is finished.
   
   
   NOTICE:
