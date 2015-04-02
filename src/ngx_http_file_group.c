@@ -19,7 +19,7 @@ ngx_int_t ngx_fgroup_batch_reload(ngx_str_t *group_name, ngx_array_t *args, ngx_
         return RELOAD_FGROUP_FAIL; 
     }
      
-    //group正在使用，客户端需要稍后重试
+    //group under reload，client need to retry later 
     if(!ngx_fgroup_trylock(group)) {
         return RELOAD_FGROUP_BUSY;
     }
@@ -29,16 +29,16 @@ ngx_int_t ngx_fgroup_batch_reload(ngx_str_t *group_name, ngx_array_t *args, ngx_
     ngx_fgroup_bufferset_get_changed((ngx_fgroup_bufferset_t *)(&fgroup->bs), &g_v);
     ngx_fgroup_shm_bufferset_t *bs_sh = (ngx_fgroup_shm_bufferset_t *)fgroup->bs.shm_mem;
     
-    //共享数据处于不完整状态，需要修复
+    //inconsistent, need recover
     if(g_v & NGX_FGROUP_IN_UPDATE) {
         g_v &= ~NGX_FGROUP_IN_UPDATE;
-        //无法安全回退到本地版本，后续进行full-reload
+        //cannot rollback to local version，do full-reload later
         if(g_v != fgroup->bs.set_version) {
             //full reload
             bs_sh->updated_idx = 0;
         }
     }
-    //最新的版本大于自己的版本，需要等待本地版本同步到最新版本后，才能reload
+    //global version larger than local version, cannot reload until synced
     else if(g_v > fgroup->bs.set_version) {
         ngx_fgroup_unlock(group);
         return RELOAD_FGROUP_BUSY;
@@ -49,11 +49,11 @@ ngx_int_t ngx_fgroup_batch_reload(ngx_str_t *group_name, ngx_array_t *args, ngx_
     u_char **key = fgroup->bs.ptrs.elts; 
     
     if(g_v == fgroup->bs.set_version) {
-        //版本号相同，需要check更改链表是否一致
+        //same version, need to check update list
         for (i = bs_sh->updated_idx; i != 0; i = bs_sh->buffer_version[i-1].next_elem) {
             j = i-1;
             h = (ngx_fgroup_shm_header_t *)(key[j] - sizeof(ngx_fgroup_shm_header_t));
-            //当前buffer没有变化
+            //buffer no change
             if(key[j] == NULL || h->id == bs_sh->buffer_version[j].buf_id )
                 continue;
             bs_sh->buffer_version[j].buf_id = h->id;
@@ -61,7 +61,7 @@ ngx_int_t ngx_fgroup_batch_reload(ngx_str_t *group_name, ngx_array_t *args, ngx_
         bs_sh->updated_idx = 0;
     }
 
-    //开始reload
+    //begin reload
     int aio = 0;
     int load_all = 1;
     ngx_str_t *str_arg = args->elts;
@@ -80,7 +80,7 @@ ngx_int_t ngx_fgroup_batch_reload(ngx_str_t *group_name, ngx_array_t *args, ngx_
     }
 #endif
 
-    //标识改文件组正在修改
+    //mark updating
     bs_sh->set_version = bs_sh->set_version | NGX_FGROUP_IN_UPDATE;
 
     for(i=0; i<args->nelts; i++) {
@@ -108,10 +108,10 @@ ngx_int_t ngx_fgroup_batch_reload(ngx_str_t *group_name, ngx_array_t *args, ngx_
         ngx_fgroup_bufferset_set_local_version((ngx_fgroup_bufferset_t *)&fgroup->bs, vv);
     }
     else {
-        //已经回退完毕，版本号恢复
+        //rollback done, restore version number
         bs_sh->set_version &= ~NGX_FGROUP_IN_UPDATE;  
     }
-    //释放老的buffer如果还有的话
+    //free old bufferset if any
     ngx_fgroup_file_undo_log_t *logs;
 
     logs = fgroup->undo_log.elts;

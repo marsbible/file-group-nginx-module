@@ -282,7 +282,6 @@ static int ngx_fgroup_checker(void *arg, void *conf)
             for (i = bs_sh->updated_idx; i != 0; i = bs_sh->buffer_version[i-1].next_elem) {
                 j = i - 1;
                 h = (ngx_fgroup_shm_header_t *)(key[j] - sizeof(ngx_fgroup_shm_header_t));
-                //当前buffer没有变化
                 if(key[j] == NULL) {
                     bs_sh->updated_idx = bs_sh->buffer_version[j].next_elem;
                     continue;
@@ -297,7 +296,6 @@ static int ngx_fgroup_checker(void *arg, void *conf)
         else
             bs_sh->set_version |= NGX_FGROUP_IN_UPDATE;
     }
-    //undolog清理
     ctx->undo_log.nelts = 0;
     ngx_fgroup_unlock(arg);
     return 1;
@@ -468,13 +466,12 @@ static void ngx_fgroup_aio_event_handler(ngx_event_t *ev)
         uint64_t vv = ngx_fgroup_bufferset_inc_version_locked((ngx_fgroup_bufferset_t *)&fgroup->bs);
         ngx_fgroup_bufferset_set_local_version((ngx_fgroup_bufferset_t *)&fgroup->bs, vv);
     }
-    else {//reload中发生了错误 
+    else { //error occured
         ((ngx_fgroup_bufferset_t *)fgroup->bs.shm_mem)->set_version &= ~NGX_FGROUP_IN_UPDATE;
         aio = -1;
     }
     fgroup->error_idx = -1;
 
-    //释放老的buffer如果还有的话
     ngx_fgroup_file_undo_log_t *logs;
 
     logs = fgroup->undo_log.elts;
@@ -498,7 +495,8 @@ static void ngx_fgroup_aio_event_handler(ngx_event_t *ev)
 
 //conf: current conf 
 //fgroup: file group to be reload
-//key: name in file group config 
+//key: name in file group config
+//aio_st: aio contex
 //return value: AIO number issued, 0 means no AIO issued
 int ngx_fgroup_reload_aio(void *conf, void *fgroup, ngx_str_t *key, ngx_fgroup_aio_handler_t *aio_st)
 {

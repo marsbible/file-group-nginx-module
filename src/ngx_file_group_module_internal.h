@@ -1,10 +1,10 @@
 #include "ngx_file_group_module.h"
 /* buffer set for internal use*/
 typedef struct {
-    void *shm_mem; //指向共享内存中的数据
-    ngx_array_t ptrs; //指向各个buffer的指针
-    uintptr_t set_version; //本地存储的bufferset版本号
-    void *pool; //内存池,添加元素使用
+    void *shm_mem; //point to shared meta data
+    ngx_array_t ptrs; //array of buffer pointer
+    uintptr_t set_version; //local version of bufferset
+    void *pool; //memory pool
 } ngx_fgroup_bufferset_internal_t;
 
 /* ngx file group undo log */
@@ -32,7 +32,7 @@ typedef struct {
     ngx_uint_t            group_idx; //group index in file_groups 
     ngx_str_t             name;
     ngx_str_t             filepath;
-    ngx_str_t             fullpath;//完整路径
+    ngx_str_t             fullpath;
     ngx_uint_t            arr_index; //buf index in bufferset
     ngx_file_t            file; //onloading file info if any 
 }ngx_fgroup_file_node_t;
