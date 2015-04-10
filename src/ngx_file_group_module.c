@@ -251,14 +251,21 @@ ngx_fgroup_group_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_conf_t   save;
     ngx_str_t       *value;
     ngx_str_t       group_name = ngx_string("");
-    
-    /* the main mail context */
-    ngx_fgroup_conf_t *clcf = ngx_pcalloc(cf->pool, sizeof(ngx_fgroup_conf_t));
-    if (clcf == NULL) {
-        return NGX_CONF_ERROR;
-    }
+   
+    ngx_fgroup_conf_t *clcf;
 
-    *(ngx_fgroup_conf_t **)conf = clcf;
+    /* the main mail context */
+    if(*(ngx_fgroup_conf_t **)conf  == NULL) {
+        clcf = ngx_pcalloc(cf->pool, sizeof(ngx_fgroup_conf_t));
+        if (clcf == NULL) {
+            return NGX_CONF_ERROR;
+        }
+
+        *(ngx_fgroup_conf_t **)conf = clcf;
+    }
+    else {
+        clcf = *(ngx_fgroup_conf_t **)conf;
+    }
 
     value = cf->args->elts;
 
