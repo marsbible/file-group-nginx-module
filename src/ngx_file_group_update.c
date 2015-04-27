@@ -757,8 +757,8 @@ full_reload:
         ngx_fgroup_file_undo_log_t *logs;
 
         logs = groups[n].undo_log.elts;
-        for (n = groups[n].undo_log.nelts; n > 0; n--) {
-            ngx_fgroup_shm_free(logs[n-1].ptr);
+        for (i = groups[n].undo_log.nelts; i > 0; i--) {
+            ngx_fgroup_shm_free(logs[i-1].ptr);
         }
         groups[n].undo_log.nelts = 0;
 
